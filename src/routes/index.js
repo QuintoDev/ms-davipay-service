@@ -10,6 +10,7 @@ const Transferencia = require('../models/Transferencia');
 const { sequelize } = require('../config/database');
 const { generateToken } = require('../utils/jwt');
 const { client } = require('../utils/metrics');
+const { Op } = require('sequelize');
 
 Transferencia.belongsTo(User, { as: 'origen', foreignKey: 'origenId' });
 Transferencia.belongsTo(User, { as: 'destino', foreignKey: 'destinoId' });
@@ -150,25 +151,6 @@ router.post('/transferir', auth, async (req, res) => {
     const emisor = await User.findByPk(req.user.id);
     const receptor = await User.findOne({ where: { celular: celular_destino } });
 
-    if (emisor.id === receptor.id) {
-      await Transferencia.create({
-        origenId: emisor.id,
-        destinoId: receptor.id,
-        monto,
-        estado: 'FALLIDA',
-        motivoFalla: 'TRANSFERENCIA_A_SI_MISMO'
-      });
-
-      logger.warn({
-        userId: emisor.id,
-        action: 'transfer_attempt',
-        status: 'failed',
-        reason: 'self_transfer'
-      });
-
-      return response.error(res, 'SELF_TRANSFER_NOT_ALLOWED', 'No puedes transferirte dinero a ti mismo', {}, 400);
-    }
-
     if (!receptor) {
       await Transferencia.create({
         origenId: emisor.id,
@@ -186,6 +168,25 @@ router.post('/transferir', auth, async (req, res) => {
       });
 
       return response.error(res, 'DESTINO_NO_EXISTE', 'El número destino no existe', {}, 404);
+    }
+
+    if (emisor.id === receptor.id) {
+      await Transferencia.create({
+        origenId: emisor.id,
+        destinoId: receptor.id,
+        monto,
+        estado: 'FALLIDA',
+        motivoFalla: 'TRANSFERENCIA_A_SI_MISMO'
+      });
+
+      logger.warn({
+        userId: emisor.id,
+        action: 'transfer_attempt',
+        status: 'failed',
+        reason: 'self_transfer'
+      });
+
+      return response.error(res, 'SELF_TRANSFER_NOT_ALLOWED', 'No puedes transferirte dinero a ti mismo', {}, 400);
     }
 
     if (Number(emisor.saldo) < Number(monto)) {
@@ -261,7 +262,12 @@ router.get('/transferencias', auth, async (req, res) => {
 
   try {
     const transferencias = await Transferencia.findAndCountAll({
-      where: { origenId: req.user.id },
+      where: {
+        [Op.or]: [
+          { origenId: req.user.id },
+          { destinoId: req.user.id }
+        ]
+      },
       include: [
         { model: User, as: 'destino', attributes: ['celular'] },
         { model: User, as: 'origen', attributes: ['celular'] }
@@ -279,15 +285,20 @@ router.get('/transferencias', auth, async (req, res) => {
       limit
     });
 
-    const result = transferencias.rows.map(t => ({
-      id: t.id,
-      fecha: t.createdAt,
-      valor: Number(t.monto),
-      origen: t.origen?.celular || null,
-      destino: t.destino?.celular || null,
-      estado: t.estado,
-      motivoFalla: t.motivoFalla || null
-    }));
+const result = transferencias.rows.map(t => {
+  const tipo = t.origenId === req.user.id ? 'ENVIADA' : 'RECIBIDA';
+
+  return {
+    id: t.id,
+    fecha: t.createdAt,
+    valor: Number(t.monto),
+    origen: t.origen?.celular || null,
+    destino: t.destino?.celular || null,
+    estado: t.estado,
+    motivoFalla: t.motivoFalla || null,
+    tipo
+  };
+});
 
     return response.success(res, {
       page,

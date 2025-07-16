@@ -8,7 +8,6 @@ const { httpRequestCounter, httpRequestDuration } = require('./utils/metrics');
 
 dotenv.config();
 
-const PORT = process.env.PORT || 3000;
 const app = express();
 
 // Middleware
@@ -69,7 +68,4 @@ app.use((req, res, next) => {
   next();
 });
 
-// Start server
-app.listen(PORT, () => {
-    logger.info(`Server running on http://localhost:${PORT}`);
-});
+module.exports = app;
