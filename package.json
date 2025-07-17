@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "devStart": "nodemon src/server.js",
+    "db:init": "node scripts/init-db.js",
     "start": "node src/server.js",
     "test": "jest --runInBand",
     "test:coverage": "jest --coverage"

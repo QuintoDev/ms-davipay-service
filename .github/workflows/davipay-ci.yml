@@ -61,9 +61,15 @@ jobs:
             sleep 2
           done
           echo "Postgres no respondió a tiempo." && exit 1
+        
+      - name: Inicializar base de datos
+        run: npm run db:init
 
       - name: Ejecutar tests
         run: npm test
+
+      - name: Inicializar base de datos
+        run: npm run db:init
 
       - name: Reporte de cobertura
         run: npm run test:coverage
