@@ -1,5 +1,7 @@
 # ms-davipay-service
 
+![coverage](https://img.shields.io/badge/coverage-84%25-brightgreen)
+
 Servicio backend para simulación de transferencias entre usuarios, validado mediante OTP simulado y JWT, con persistencia en PostgreSQL y métricas para Prometheus.
 
 ## Características
