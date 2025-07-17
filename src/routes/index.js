@@ -1,3 +1,17 @@
+/**
+ * @swagger
+ * tags:
+ *   - name: Health
+ *     description: Health check endpoint
+ *   - name: Auth
+ *     description: Authentication endpoints
+ *   - name: Usuario
+ *     description: Operaciones de usuario
+ *   - name: Transferencias
+ *     description: Operaciones de transferencias
+ *   - name: Métricas
+ *     description: Endpoint de métricas
+ */
 const express = require('express');
 const router = express.Router();
 const response = require('../utils/response');
@@ -15,8 +29,33 @@ const { Op } = require('sequelize');
 Transferencia.belongsTo(User, { as: 'origen', foreignKey: 'origenId' });
 Transferencia.belongsTo(User, { as: 'destino', foreignKey: 'destinoId' });
 
-
-// Health
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: The service is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       example: ok
+ *                 message:
+ *                   type: string
+ *                   example: The service is healthy
+ */
 router.get('/health', (req, res) => {
   logger.info({
     action: 'health_check',
@@ -27,10 +66,150 @@ router.get('/health', (req, res) => {
   return response.success(res, { status: 'ok' }, 'The service is healthy');
 });
 
-// Login route
+/**
+ * @swagger
+ *  /login:
+ *   post:
+ *     summary: Login de usuario
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               celular:
+ *                 type: string
+ *                 example: "3001234567"
+ *     responses:
+ *       200:
+ *         description: Autenticación exitosa
+ */
 router.use('/login', authRoutes);
 
-// OTP route
+/**
+ * @swagger
+  * /otp:
+ *   post:
+ *     summary: Validar OTP
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               celular:
+ *                 type: string
+ *                 example: "3001234567"
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: Autenticación exitosa
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     token:
+ *                       type: string
+ *                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                 message:
+ *                   type: string
+ *                   example: Autenticación exitosa
+ *       400:
+ *         description: Datos inválidos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     code:
+ *                       type: string
+ *                       example: VALIDATION_ERROR
+ *                     message:
+ *                       type: string
+ *                       example: Datos inválidos
+ *                     details:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           message:
+ *                             type: string
+ *                             example: '"celular" with value "*******5612" fails to match the required pattern: /^\\d{10}$/'
+ *                           path:
+ *                             type: array
+ *                             items:
+ *                               type: string
+ *                             example: ["celular"]
+ *                           type:
+ *                             type: string
+ *                             example: string.pattern.base
+ *                           context:
+ *                             type: object
+ *                             additionalProperties: true
+ *       401:
+ *         description: OTP incorrecto
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     code:
+ *                       type: string
+ *                       example: INVALID_OTP
+ *                     message:
+ *                       type: string
+ *                       example: OTP incorrecto
+ *                     details:
+ *                       type: object
+ *                       example: {}
+ *       404:
+ *         description: Usuario no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     code:
+ *                       type: string
+ *                       example: USER_NOT_FOUND
+ *                     message:
+ *                       type: string
+ *                       example: Usuario no encontrado
+ *                     details:
+ *                       type: object
+ *                       example: {}
+ */
 router.post('/otp', async (req, res) => {
   const { celular, otp } = req.body;
   const celularMasked = celular.replace(/^(\d{6})/, '******');
@@ -94,7 +273,56 @@ router.post('/otp', async (req, res) => {
   }
 });
 
-// Saldo route
+/**
+ * @swagger
+ * /saldo:
+ *   get:
+ *     summary: Consultar saldo
+ *     tags: [Usuario]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Saldo consultado correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     saldo:
+ *                       type: number
+ *                       example: 100000
+ *                 message:
+ *                   type: string
+ *                   example: Saldo consultado correctamente
+ *       401:
+ *         description: Token inválido o expirado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     code:
+ *                       type: string
+ *                       example: INVALID_TOKEN
+ *                     message:
+ *                       type: string
+ *                       example: Token inválido o expirado
+ *                     details:
+ *                       type: object
+ */
 router.get('/saldo', auth, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
@@ -127,7 +355,133 @@ router.get('/saldo', auth, async (req, res) => {
   }
 })
 
-// Transferir route
+/**
+ * @swagger
+ * /transferir:
+ *   post:
+ *     summary: Realizar transferencia
+ *     tags: [Transferencias]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               celular_destino:
+ *                 type: string
+ *                 example: "3007654321"
+ *               monto:
+ *                 type: number
+ *                 example: 10000
+ *     responses:
+ *       200:
+ *         description: Transferencia realizada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     saldo:
+ *                       type: number
+ *                       example: 94300
+ *                 message:
+ *                   type: string
+ *                   example: Transferencia realizada exitosamente
+ *       400:
+ *         description: Error de validación o lógica de negocio
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     code:
+ *                       type: string
+ *                       example: VALIDATION_ERROR
+ *                     message:
+ *                       type: string
+ *                       example: Datos inválidos
+ *                     details:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *             examples:
+ *               Validación:
+ *                 value:
+ *                   success: false
+ *                   error:
+ *                     code: VALIDATION_ERROR
+ *                     message: Datos inválidos
+ *                     details:
+ *                       - message: '"monto" must be a positive number'
+ *               Saldo insuficiente:
+ *                 value:
+ *                   success: false
+ *                   error:
+ *                     code: SALDO_INSUFICIENTE
+ *                     message: No tienes saldo suficiente
+ *               Transferencia a sí mismo:
+ *                 value:
+ *                   success: false
+ *                   error:
+ *                     code: SELF_TRANSFER_NOT_ALLOWED
+ *                     message: No puedes transferirte dinero a ti mismo
+ *       404:
+ *         description: Usuario destino no existe
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     code:
+ *                       type: string
+ *                       example: DESTINO_NO_EXISTE
+ *                     message:
+ *                       type: string
+ *                       example: El número destino no existe
+ *                     details:
+ *                       type: object
+ *                       example: {}
+ *       401:
+ *         description: Token inválido o expirado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: object
+ *                   properties:
+ *                     code:
+ *                       type: string
+ *                       example: INVALID_TOKEN
+ *                     message:
+ *                       type: string
+ *                       example: Token inválido o expirado
+ *                     details:
+ *                       type: object
+ */
 router.post('/transferir', auth, async (req, res) => {
   const { celular_destino, monto } = req.body;
 
@@ -254,7 +608,61 @@ router.post('/transferir', auth, async (req, res) => {
   }
 });
 
-// Transferencias route
+/**
+ * @swagger
+ * /transferencias:
+ *   get:
+ *     summary: Consultar historial de transferencias
+ *     tags: [Transferencias]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Número de página
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Cantidad de resultados por página
+ *     responses:
+ *       200:
+ *         description: Historial de transferencias
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 page:
+ *                   type: integer
+ *                 total:
+ *                   type: integer
+ *                 transferencias:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       fecha:
+ *                         type: string
+ *                         format: date-time
+ *                       valor:
+ *                         type: number
+ *                       origen:
+ *                         type: string
+ *                       destino:
+ *                         type: string
+ *                       estado:
+ *                         type: string
+ *                       motivoFalla:
+ *                         type: string
+ *                       tipo:
+ *                         type: string
+ *                         enum: [ENVIADA, RECIBIDA]
+ */
 router.get('/transferencias', auth, async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
@@ -285,20 +693,20 @@ router.get('/transferencias', auth, async (req, res) => {
       limit
     });
 
-const result = transferencias.rows.map(t => {
-  const tipo = t.origenId === req.user.id ? 'ENVIADA' : 'RECIBIDA';
+    const result = transferencias.rows.map(t => {
+      const tipo = t.origenId === req.user.id ? 'ENVIADA' : 'RECIBIDA';
 
-  return {
-    id: t.id,
-    fecha: t.createdAt,
-    valor: Number(t.monto),
-    origen: t.origen?.celular || null,
-    destino: t.destino?.celular || null,
-    estado: t.estado,
-    motivoFalla: t.motivoFalla || null,
-    tipo
-  };
-});
+      return {
+        id: t.id,
+        fecha: t.createdAt,
+        valor: Number(t.monto),
+        origen: t.origen?.celular || null,
+        destino: t.destino?.celular || null,
+        estado: t.estado,
+        motivoFalla: t.motivoFalla || null,
+        tipo
+      };
+    });
 
     return response.success(res, {
       page,
@@ -317,7 +725,20 @@ const result = transferencias.rows.map(t => {
   }
 });
 
-// Metrics route
+/**
+ * @swagger
+ *  /metrics:
+ *   get:
+ *     summary: Obtener métricas del servicio
+ *     tags: [Métricas]
+ *     responses:
+ *       200:
+ *         description: Métricas en formato Prometheus
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ */
 router.get('/metrics', async (req, res) => {
   try {
     const metrics = await client.register.metrics();

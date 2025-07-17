@@ -5,6 +5,8 @@ const logger = require('./utils/logger');
 const routes = require('./routes');
 const { connectDB } = require('./config/database');
 const { httpRequestCounter, httpRequestDuration } = require('./utils/metrics');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJSDoc = require('swagger-jsdoc');
 
 dotenv.config();
 
@@ -67,5 +69,33 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Swagger setup
+const swaggerSpec = swaggerJSDoc({
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'API Davipay',
+      version: '1.0.0',
+      description: 'Documentación de la API del servicio de transferencias Davipay',
+    },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        }
+      }
+    },
+    security: [{
+      bearerAuth: []
+    }]
+  },
+  apis: ['./src/routes/*.js'],
+});
+
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 module.exports = app;
