@@ -37,6 +37,9 @@ jobs:
       PORT: 3000
 
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        
       - name: Download Docker image artifact
         uses: actions/download-artifact@v4
         with:
