@@ -51,6 +51,7 @@ npm start
 
 ```bash
 npm test
+npm run test:coverage
 ```
 
 ---
