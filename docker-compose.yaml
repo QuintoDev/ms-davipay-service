@@ -21,7 +21,7 @@ services:
     environment:
       PORT: 3000
       JWT_SECRET: supersecreto
-      JWT_EXPIRES_IN: 1m
+      JWT_EXPIRES_IN: 5m
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: postgres
