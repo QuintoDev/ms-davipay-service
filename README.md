@@ -113,13 +113,13 @@ Authorization: Bearer <token>
 ### Construcción de la imagen
 
 ```bash
-docker build -t davipay-backend .
+docker build -t ms-davipay-service .
 ```
 
 ### Ejecución
 
 ```bash
-docker run -p 3000:3000 --env-file .env davipay-backend
+docker run -p 3000:3000 --env-file .env ms-davipay-service
 ```
 
 ---
