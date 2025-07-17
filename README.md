@@ -133,6 +133,14 @@ docker run -d --name davipay \
 
 ---
 
+### Ejecución con Docker Compose
+
+```bash
+docker compose up -d
+```
+
+---
+
 ## Swagger
 
 Disponible en: `http://localhost:3000/api-docs`
