@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../src/app');
 const { sequelize } = require('../src/config/database');
+const { delay } = require('../utils/testHelper');
 
 describe('Historial de Transferencias', () => {
   let tokenEmisor;
@@ -30,13 +31,16 @@ describe('Historial de Transferencias', () => {
     // Crear usuarios con login (mock)
     await request(app).post('/login').send({ celular: '3000000003' });
     await request(app).post('/login').send({ celular: '3000000004' });
+    await delay(100);
 
     // Obtener tokens
     const resEmisor = await request(app).post('/otp').send({ celular: '3000000003', otp: '123456' });
     tokenEmisor = resEmisor.body.data.token;
+    await delay(100);
 
     const resReceptor = await request(app).post('/otp').send({ celular: '3000000004', otp: '123456' });
     tokenReceptor = resReceptor.body.data.token;
+    await delay(100);
 
     // Transferir dinero
     await request(app)

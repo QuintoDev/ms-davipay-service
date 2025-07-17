@@ -1,18 +1,30 @@
 const request = require('supertest');
 const app = require('../src/app');
-const jwt = require('jsonwebtoken');
+const { delay } = require('../utils/testHelper');
 
-let token, emisorCelular = '3000000001', receptorCelular = '3000000002';
+let token;
+const emisorCelular = '3000000001';
+const receptorCelular = '3000000002';
+
+async function crearUsuarioYObtenerToken(celular) {
+  await request(app).post('/login').send({ celular });
+  await delay(100);
+
+  const otpRes = await request(app).post('/otp').send({ celular, otp: '123456' });
+  await delay(100);
+
+  if (otpRes.statusCode !== 200 || !otpRes.body?.data?.token) {
+    console.error('No se pudo obtener el token para:', celular, otpRes.body);
+    throw new Error(`Error obteniendo token para ${celular}`);
+  }
+
+  return otpRes.body.data.token;
+}
 
 describe('Transferencia', () => {
   beforeAll(async () => {
-    // Crear usuarios automáticamente a través del login
-    const res1 = await request(app).post('/login').send({ celular: emisorCelular });
-    const res2 = await request(app).post('/login').send({ celular: receptorCelular });
-
-    // Obtener token del emisor
-    const otpRes = await request(app).post('/otp').send({ celular: emisorCelular, otp: '123456' });
-    token = otpRes.body.data.token;
+    token = await crearUsuarioYObtenerToken(emisorCelular);
+    await crearUsuarioYObtenerToken(receptorCelular);
   });
 
   it('debe transferir correctamente', async () => {
@@ -72,8 +84,8 @@ describe('Transferencia', () => {
       .post('/transferir')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        celular_destino: '123', // inválido
-        monto: -500              // inválido
+        celular_destino: '123',
+        monto: -500
       });
 
     expect(res.statusCode).toBe(400);

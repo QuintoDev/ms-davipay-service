@@ -1,10 +1,7 @@
 const request = require('supertest');
 const app = require('../src/app');
 const { sequelize } = require('../src/config/database');
-
-beforeAll(async () => {
-  await sequelize.sync({ force: true });
-});
+const { delay } = require('../utils/testHelper');
 
 describe('Login', () => {
   it('debe devolver 200 y token con celular válido', async () => {
