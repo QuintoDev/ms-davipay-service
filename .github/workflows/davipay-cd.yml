@@ -1,14 +1,13 @@
-name: Test Docker Image Artifact
+# .github/workflows/node-cd.yml
+
+name: Node CD
 
 on:
-  workflow_dispatch:
-  workflow_run:
-    workflows: ["Build Docker Artifact"]
-    types:
-      - completed
+  push:
+    branches: ["main"]
 
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
 
     services:
@@ -37,13 +36,16 @@ jobs:
       PORT: 3000
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        
-      - name: Download Docker image artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: davipay-image
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker build -t davipay-app .
+
+      - name: Export Docker image as tar
+        run: docker save davipay-app > davipay-app.tar
 
       - name: Load Docker image
         run: docker load < davipay-app.tar
@@ -64,16 +66,3 @@ jobs:
           sleep 10
 
           curl -f http://localhost:3000/health || (docker logs davipay && exit 1)
-
-      - name: Delete artifact after test
-        if: success()
-        run: |
-          ARTIFACT_ID=$(gh api repos/${{ github.repository }}/actions/artifacts \
-            | jq '.artifacts[] | select(.name=="davipay-image") | .id')
-
-          if [ -n "$ARTIFACT_ID" ]; then
-            echo "🗑️ Eliminando artefacto ID $ARTIFACT_ID"
-            gh api --method DELETE repos/${{ github.repository }}/actions/artifacts/$ARTIFACT_ID
-          fi
-        env:
-          GH_TOKEN: ${{ github.token }}
