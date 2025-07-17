@@ -22,7 +22,7 @@ Servicio backend para simulación de transferencias entre usuarios, validado med
 1. **Clonar el repositorio:**
 
 ```bash
-git clone https://github.com/usuario/ms-davipay-service.git
+git clone https://github.com/QuintoDev/ms-davipay-service.git
 cd ms-davipay-service
 ```
 
@@ -119,7 +119,16 @@ docker build -t ms-davipay-service .
 ### Ejecución
 
 ```bash
-docker run -p 3000:3000 --env-file .env ms-davipay-service
+docker run -d --name davipay \
+            --network host \
+            -e DB_HOST=$DB_HOST \
+            -e DB_PORT=$DB_PORT \
+            -e DB_USER=$DB_USER \
+            -e DB_PASSWORD=$DB_PASSWORD \
+            -e DB_NAME=$DB_NAME \
+            -e JWT_SECRET=$JWT_SECRET \
+            -e NODE_ENV=$NODE_ENV \
+            -p 3000:3000 davipay-app
 ```
 
 ---
