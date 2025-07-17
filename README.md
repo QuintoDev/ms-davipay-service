@@ -55,17 +55,17 @@ npm test
 
 ---
 
-## Endpoints principales
+## Descripción de Endpoints, Payloads y Errores
 
-| Método | Ruta              | Autenticación | Descripción                                    |
-| ------ | ----------------- | ------------- | ---------------------------------------------- |
-| POST   | `/login`          | No            | Registra o inicia sesión con número de celular |
-| POST   | `/otp`            | No            | Simula OTP. OTP siempre es `123456`            |
-| GET    | `/saldo`          | Sí (JWT)      | Consulta saldo disponible                      |
-| POST   | `/transferir`     | Sí (JWT)      | Realiza transferencia a otro usuario           |
-| GET    | `/transferencias` | Sí (JWT)      | Historial paginado de transferencias           |
-| GET    | `/health`         | No            | Healthcheck simple                             |
-| GET    | `/metrics`        | No            | Métricas para Prometheus                       |
+| Método | Ruta              | Autenticación | Descripción                             | Payload Requerido                          | Errores posibles                                                                                           |
+|--------|-------------------|----------------|-----------------------------------------|--------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| POST   | `/login`          | No          | Inicia sesión o registra al usuario     | `{ "celular": "3001234567" }`              | `400 VALIDATION_ERROR`                                                                                    |
+| POST   | `/otp`            | No          | Valida OTP fijo (`123456`)              | `{ "celular": "3001234567", "otp": "123456" }` | `400 VALIDATION_ERROR`, `401 INVALID_OTP`, `404 USER_NOT_FOUND`                                       |
+| GET    | `/saldo`          | Sí (JWT)    | Consulta el saldo del usuario           | Ninguno (requiere JWT en header)           | `401 INVALID_TOKEN`, `404 USER_NOT_FOUND`                                                                 |
+| POST   | `/transferir`     | Sí (JWT)    | Transfiere saldo a otro usuario         | `{ "celular_destino": "3007654321", "monto": 10000 }` | `400 VALIDATION_ERROR`, `400 SALDO_INSUFICIENTE`, `400 SELF_TRANSFER_NOT_ALLOWED`, `404 DESTINO_NO_EXISTE`, `401 INVALID_TOKEN` |
+| GET    | `/transferencias` | Sí (JWT)    | Retorna historial de transferencias     | Query opcional: `?page=1&limit=10`         | `401 INVALID_TOKEN`                                                                                       |
+| GET    | `/health`         | No          | Verifica si el servicio está activo     | Ninguno                                     | Ninguno                                                                                                   |
+| GET    | `/metrics`        | No          | Devuelve métricas en formato Prometheus | Ninguno                                     | `500 INTERNAL_ERROR` si falla la exportación                                                              |
 
 ---
 
