@@ -157,8 +157,7 @@ Hernán Quintero
 
 ---
 
-## TODO (si aplica)
+## Licencia
 
-- Implementar CI/CD real en GitHub Actions
-- Despliegue en ECS/EKS o similar
+Este proyecto está bajo la licencia MIT.
 

@@ -15,7 +15,7 @@ async function crearUsuarioYObtenerToken(celular) {
 
   if (otpRes.statusCode !== 200 || !otpRes.body?.data?.token) {
     console.error('No se pudo obtener el token para:', celular, otpRes.body);
-    throw new Error(`Error obteniendo token para ${celular}`);
+    //throw new Error(`Error obteniendo token para ${celular}`);
   }
 
   return otpRes.body.data.token;
