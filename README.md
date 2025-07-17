@@ -28,7 +28,7 @@ cd ms-davipay-service
 npm install
 ```
 
-3. **Crear archivo ****\`\`****:**
+3. **Crear archivo `.env`:**
 
 ```env
 PORT=3000
@@ -39,7 +39,7 @@ DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_NAME=davipay
-```
+
 
 4. **Ejecutar localmente:**
 
