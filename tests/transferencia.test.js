@@ -1,5 +1,6 @@
 const request = require('supertest');
 const app = require('../src/app');
+const { sequelize } = require('../src/models'); // <- importa la instancia de Sequelize
 const { delay } = require('../utils/testHelper');
 
 let token;
@@ -15,7 +16,6 @@ async function crearUsuarioYObtenerToken(celular) {
 
   if (otpRes.statusCode !== 200 || !otpRes.body?.data?.token) {
     console.error('No se pudo obtener el token para:', celular, otpRes.body);
-    //throw new Error(`Error obteniendo token para ${celular}`);
   }
 
   return otpRes.body.data.token;
@@ -23,6 +23,8 @@ async function crearUsuarioYObtenerToken(celular) {
 
 describe('Transferencia', () => {
   beforeAll(async () => {
+    await sequelize.sync({ force: true });
+
     token = await crearUsuarioYObtenerToken(emisorCelular);
     await crearUsuarioYObtenerToken(receptorCelular);
   });
