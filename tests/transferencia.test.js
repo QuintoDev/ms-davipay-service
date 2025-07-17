@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../src/app');
-const { sequelize } = require('../src/models'); // <- importa la instancia de Sequelize
+const { sequelize } = require('../src/config/database');
 const { delay } = require('../utils/testHelper');
 
 let token;
