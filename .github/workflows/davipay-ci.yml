@@ -42,11 +42,28 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      - run: npm ci
-      - run: npm test
-      - run: npm run test:coverage
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Esperar a que PostgreSQL esté listo
+        run: |
+          echo "Esperando a que PostgreSQL esté listo..."
+          for i in {1..10}; do
+            pg_isready -h localhost -p 5432 && echo "Postgres está listo" && exit 0
+            echo "Esperando..."
+            sleep 2
+          done
+          echo "Postgres no respondió a tiempo." && exit 1
+
+      - name: Ejecutar tests
+        run: npm test
+
+      - name: Reporte de cobertura
+        run: npm run test:coverage
