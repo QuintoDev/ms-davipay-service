@@ -1,0 +1,75 @@
+name: Test Docker Image Artifact
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Build Docker Artifact"]
+    types:
+      - completed
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: davipay_test
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DB_HOST: host.docker.internal
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: davipay_test
+      NODE_ENV: test
+      JWT_SECRET: supersecreto
+      PORT: 3000
+
+    steps:
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: davipay-image
+
+      - name: Load Docker image
+        run: docker load < davipay-app.tar
+
+      - name: Run container and test health
+        run: |
+          docker run -d --name davipay \
+            -e DB_HOST=$DB_HOST \
+            -e DB_PORT=$DB_PORT \
+            -e DB_USER=$DB_USER \
+            -e DB_PASSWORD=$DB_PASSWORD \
+            -e DB_NAME=$DB_NAME \
+            -e JWT_SECRET=$JWT_SECRET \
+            -e NODE_ENV=$NODE_ENV \
+            -p 3000:3000 davipay-app
+
+          echo "Esperando container..."
+          sleep 10
+
+          curl -f http://localhost:3000/health || (docker logs davipay && exit 1)
+
+      - name: Delete artifact after test
+        run: |
+          ARTIFACT_ID=$(gh api repos/${{ github.repository }}/actions/artifacts \
+            | jq '.artifacts[] | select(.name=="davipay-image") | .id')
+
+          if [ -n "$ARTIFACT_ID" ]; then
+            echo "🗑️ Eliminando artefacto ID $ARTIFACT_ID"
+            gh api --method DELETE repos/${{ github.repository }}/actions/artifacts/$ARTIFACT_ID
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
