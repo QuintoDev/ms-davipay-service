@@ -63,6 +63,7 @@ jobs:
           curl -f http://localhost:3000/health || (docker logs davipay && exit 1)
 
       - name: Delete artifact after test
+        if: success()
         run: |
           ARTIFACT_ID=$(gh api repos/${{ github.repository }}/actions/artifacts \
             | jq '.artifacts[] | select(.name=="davipay-image") | .id')
